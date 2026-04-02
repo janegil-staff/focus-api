@@ -4,8 +4,8 @@ import { signTokens, verifyRefresh, generateAccessCode } from "../utils/jwt.js";
 
 export const patientRegister = async (req, res) => {
   try {
-    const { name, email, password, language, clinicianCode } = req.body;
-    if (!name || !email || !password)
+    const { name, email, password, language, clinicianCode, age } = req.body;
+    if (!name || !email || !password || !age)
       return res
         .status(400)
         .json({
@@ -26,6 +26,7 @@ export const patientRegister = async (req, res) => {
           .json({ success: false, error: "Invalid clinician code" });
     }
     const patient = await Patient.create({
+      age,
       name,
       email,
       password,
@@ -41,6 +42,7 @@ export const patientRegister = async (req, res) => {
           ...tokens,
           patient: {
             _id: patient._id,
+            age: patient.age,
             name: patient.name,
             email: patient.email,
             language: patient.language,

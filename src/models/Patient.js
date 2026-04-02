@@ -4,8 +4,9 @@ import bcrypt from 'bcryptjs';
 const PatientSchema = new mongoose.Schema({
   name:        { type: String, required: true, trim: true },
   email:       { type: String, required: true, unique: true, lowercase: true, trim: true },
-  password:    { type: String, required: true, minlength: 6 },
+  password:    { type: String, required: true, minlength: 4 },
   dateOfBirth: { type: Date },
+  age:          {type: Number, required: true,  min: 0, max: 120 },
   gender:      { type: String, enum: ['male', 'female', 'other', 'prefer_not_to_say'] },
   diagnosis:   { type: String },
   medications: [{ type: String }],
