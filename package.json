@@ -1,0 +1,26 @@
+{
+  "name": "focus-api",
+  "version": "1.0.0",
+  "description": "Api for ADHD patients and doctors",
+  "keywords": [
+    "adhd",
+    "focus",
+    "clinical",
+    "healthcare"
+  ],
+  "homepage": "https://github.com/janegil-staff/focus-api#readme",
+  "bugs": {
+    "url": "https://github.com/janegil-staff/focus-api/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/janegil-staff/focus-api.git"
+  },
+  "license": "ISC",
+  "author": "Jan Egil Staff Øvretveit",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
