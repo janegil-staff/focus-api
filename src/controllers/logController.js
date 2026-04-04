@@ -2,19 +2,32 @@ import DailyLog from '../models/DailyLog.js';
 
 export const createOrUpdateLog = async (req, res) => {
   try {
-    const { date, mood, focus, sleep, energy, impulsivity, tasksCompleted,
-            screenTimeHours, medicationTaken, medicationNames, medicationDoses,
-            medicationNotes, note, triggers } = req.body;
+    const { date } = req.body;
+    if (!date) return res.status(400).json({ success: false, error: 'date is required' });
+
+    // Build update object with only fields that were sent
+    const fields = [
+      'mood', 'focus', 'sleep', 'energy', 'impulsivity',
+      'tasksCompleted', 'screenTimeHours', 'medicationTaken',
+      'medicationNames', 'medicationDoses', 'medicationNotes',
+      'note', 'triggers',
+    ];
+
+    const update = {};
+    for (const f of fields) {
+      if (req.body[f] !== undefined) update[f] = req.body[f];
+    }
+
     const log = await DailyLog.findOneAndUpdate(
       { patient: req.userId, date },
-      { patient: req.userId, date, mood, focus, sleep, energy, impulsivity,
-        tasksCompleted, screenTimeHours, medicationTaken, medicationNames,
-        medicationDoses, medicationNotes, note, triggers },
-      { upsert: true, new: true, runValidators: true }
+      { $set: { patient: req.userId, date, ...update } },
+      { upsert: true, new: true, runValidators: false }
     );
+
     res.status(201).json({ success: true, data: log });
-  } catch {
-    res.status(500).json({ success: false, error: 'Failed to save log' });
+  } catch (err) {
+    console.error('Failed to save log:', err.message, err.errors);
+    res.status(500).json({ success: false, error: err.message });
   }
 };
 
@@ -78,7 +91,7 @@ export const getSummary = async (req, res) => {
     const logs = await DailyLog.find({ patient: patientId, date: { $gte: fromStr } });
     if (logs.length === 0) return res.json({ success: true, data: { count: 0 } });
 
-    const avg = (f) => +(logs.reduce((s, l) => s + l[f], 0) / logs.length).toFixed(2);
+    const avg = (f) => +(logs.reduce((s, l) => s + (l[f] ?? 0), 0) / logs.length).toFixed(2);
     const medDays = logs.filter(l => l.medicationTaken).length;
 
     res.json({
@@ -98,7 +111,8 @@ export const getSummary = async (req, res) => {
         })),
       },
     });
-  } catch {
+  } catch (err) {
+    console.error('Summary error:', err.message);
     res.status(500).json({ success: false, error: 'Failed to compute summary' });
   }
 };
