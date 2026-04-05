@@ -1,15 +1,10 @@
 import { Router } from "express";
 import {
-  getProfile,
-  updateProfile,
-  deleteAccount,
-  getMedications,
-  createMedication,
-  updateMedication,
-  deleteMedication,
-  getNotificationSettings,
-  updateNotificationSettings,
+  getProfile, updateProfile, deleteAccount,
+  getMedications, createMedication, updateMedication, deleteMedication,
+  getNotificationSettings, updateNotificationSettings,
   bulkUpdateMedications,
+  saveASRS, getASRSHistory, 
 } from "../controllers/patientController.js";
 import { authMiddleware, patientOnly } from "../middleware/auth.js";
 
@@ -30,5 +25,8 @@ router.get("/notifications", getNotificationSettings);
 router.put("/notifications", updateNotificationSettings);
 
 router.patch("/medications/bulk", bulkUpdateMedications);
+
+router.post('/asrs', saveASRS);
+router.get('/asrs',  getASRSHistory);
 
 export default router;

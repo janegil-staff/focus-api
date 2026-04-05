@@ -1,6 +1,7 @@
 import ShareCode from '../models/ShareCode.js';
 import Patient  from '../models/Patient.js';
 import DailyLog from '../models/DailyLog.js';
+import ASRSResult  from '../models/ASRSResult.js';
 
 async function generateUniqueCode() {
   let code, exists;
@@ -47,11 +48,10 @@ export const generateShareCode = async (req, res) => {
   }
 };
 
-// GET /api/share/:code
+
 export const getSharedData = async (req, res) => {
   try {
     const { code } = req.params;
-    console.log('[share] getSharedData code:', code);
 
     const shareCode = await ShareCode.findOne({
       code,
@@ -59,13 +59,15 @@ export const getSharedData = async (req, res) => {
     });
 
     if (!shareCode) {
-      console.log('[share] code not found or expired');
       return res.status(404).json({ success: false, error: 'Code not found or expired' });
     }
 
-    const [patient, logs] = await Promise.all([
+    const [patient, logs, latestASRS] = await Promise.all([
       Patient.findById(shareCode.patient).select('-password -__v'),
       DailyLog.find({ patient: shareCode.patient }).sort({ date: -1 }).lean(),
+      ASRSResult.findOne({ patient: shareCode.patient })   // ← add this
+        .sort({ createdAt: -1 })
+        .lean(),
     ]);
 
     if (!patient) {
@@ -91,6 +93,12 @@ export const getSharedData = async (req, res) => {
           medications: patient.medications ?? [],
         },
         logs:        processedLogs,
+        asrs:        latestASRS ? {              // ← add this block
+          scoreA:     latestASRS.scoreA,
+          scoreTotal: latestASRS.scoreTotal,
+          level:      latestASRS.level,
+          takenAt:    latestASRS.createdAt,
+        } : null,
         generatedAt: new Date().toISOString(),
         expiresAt:   shareCode.expiresAt,
       },

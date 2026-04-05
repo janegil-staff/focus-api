@@ -1,7 +1,46 @@
 import Patient from "../models/Patient.js";
 import Medication from "../models/Medication.js";
 import Notification from "../models/Notification.js";
+import ASRSResult from "../models/ASRSResult.js";
 
+export const saveASRS = async (req, res) => {
+  try {
+    const { answers, scoreA, scoreTotal, level } = req.body;
+    if (scoreA === undefined || scoreTotal === undefined || !level)
+      return res
+        .status(400)
+        .json({
+          success: false,
+          error: "scoreA, scoreTotal and level are required",
+        });
+    const result = await ASRSResult.create({
+      patient: req.userId,
+      answers,
+      scoreA,
+      scoreTotal,
+      level,
+    });
+    res.status(201).json({ success: true, data: result });
+  } catch (err) {
+    console.error("saveASRS error:", err);
+    res
+      .status(500)
+      .json({ success: false, error: "Failed to save ASRS result" });
+  }
+};
+
+export const getASRSHistory = async (req, res) => {
+  try {
+    const results = await ASRSResult.find({ patient: req.userId })
+      .sort({ createdAt: -1 })
+      .limit(20);
+    res.json({ success: true, data: results });
+  } catch {
+    res
+      .status(500)
+      .json({ success: false, error: "Failed to fetch ASRS history" });
+  }
+};
 export const getProfile = async (req, res) => {
   try {
     const patient = await Patient.findById(req.userId).select("-password");
@@ -71,12 +110,10 @@ export const createMedication = async (req, res) => {
   try {
     const { name, dosage, startDate } = req.body;
     if (!name || !dosage || !startDate)
-      return res
-        .status(400)
-        .json({
-          success: false,
-          error: "name, dosage and startDate are required",
-        });
+      return res.status(400).json({
+        success: false,
+        error: "name, dosage and startDate are required",
+      });
     const med = await Medication.create({ patient: req.userId, ...req.body });
     res.status(201).json({ success: true, data: med });
   } catch {
@@ -154,12 +191,16 @@ export const bulkUpdateMedications = async (req, res) => {
   try {
     const { medications } = req.body; // array of medication name IDs e.g. ['methylphenidate', 'atomoxetine']
     if (!Array.isArray(medications))
-      return res.status(400).json({ success: false, error: 'medications must be an array' });
+      return res
+        .status(400)
+        .json({ success: false, error: "medications must be an array" });
 
     await Patient.findByIdAndUpdate(req.userId, { medications });
     res.json({ success: true, data: { medications } });
   } catch (err) {
-    console.error('bulkUpdateMedications error:', err);
-    res.status(500).json({ success: false, error: 'Failed to save medications' });
+    console.error("bulkUpdateMedications error:", err);
+    res
+      .status(500)
+      .json({ success: false, error: "Failed to save medications" });
   }
 };
