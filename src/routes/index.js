@@ -4,6 +4,7 @@ import patientRoutes   from './patient.js';
 import logRoutes       from './logs.js';
 import clinicianRoutes from './clinician.js';
 import exportRoutes    from './export.js';
+import shareRoutes     from './shareRoutes.js';
 
 const router = Router();
 
@@ -16,5 +17,6 @@ router.use('/api/patient',   patientRoutes);
 router.use('/api/logs',      logRoutes);
 router.use('/api/clinician', clinicianRoutes);
 router.use('/api/export',    exportRoutes);
+router.use('/api',    shareRoutes);
 
 export default router;
