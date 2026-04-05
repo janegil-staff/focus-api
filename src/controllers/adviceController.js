@@ -46,7 +46,7 @@ export const getAll = async (req, res) => {
 // ── GET /api/advice/relevant ───────────────────────────────────────────────────
 export const getRelevant = async (req, res) => {
   try {
-    const patient = await Patient.findOne({ userId: req.user.id });
+    const patient = await Patient.findById(req.user.id);
     if (!patient) return res.json({ success: true, data: [] });
 
     const thirtyDaysAgo = new Date();
@@ -116,8 +116,8 @@ export const remove = async (req, res) => {
 // Marks an advice item as viewed for the current patient (idempotent)
 export const markViewed = async (req, res) => {
   try {
-    await Patient.findOneAndUpdate(
-      { userId: req.user.id },
+    await Patient.findByIdAndUpdate(
+      req.user.id,
       { $addToSet: { viewedAdvice: req.params.id } }
     );
     res.json({ success: true });
@@ -130,23 +130,18 @@ export const markViewed = async (req, res) => {
 // Toggles an advice item in the patient's relevantAdvice list
 export const toggleRelevant = async (req, res) => {
   try {
-    const patient = await Patient.findOne({ userId: req.user.id });
+    const patient = await Patient.findById(req.user.id);
     if (!patient) return res.status(404).json({ success: false, message: "Patient not found" });
 
     const id = req.params.id;
     const isRelevant = patient.relevantAdvice.some((r) => r.toString() === id);
 
-    if (isRelevant) {
-      await Patient.findOneAndUpdate(
-        { userId: req.user.id },
-        { $pull: { relevantAdvice: id } }
-      );
-    } else {
-      await Patient.findOneAndUpdate(
-        { userId: req.user.id },
-        { $addToSet: { relevantAdvice: id } }
-      );
-    }
+    await Patient.findByIdAndUpdate(
+      req.user.id,
+      isRelevant
+        ? { $pull:      { relevantAdvice: id } }
+        : { $addToSet:  { relevantAdvice: id } }
+    );
 
     res.json({ success: true, relevant: !isRelevant });
   } catch (err) {
@@ -159,7 +154,7 @@ export const toggleRelevant = async (req, res) => {
 // so AdviceContext can hydrate from the database instead of starting empty
 export const getMyState = async (req, res) => {
   try {
-    const patient = await Patient.findOne({ userId: req.user.id })
+    const patient = await Patient.findById(req.user.id)
       .select("viewedAdvice relevantAdvice");
     if (!patient) return res.json({ success: true, data: { viewed: [], relevant: [] } });
 
